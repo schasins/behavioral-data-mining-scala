@@ -18,10 +18,6 @@ object Classifier {
   }
   
   def main(args : Array[String]) : Unit = {
-    
-    //val file = new java.io.File( "." ).getCanonicalPath();
-    //println(file);
-    
     val negDir = new java.io.File("resources/txt_sentoken/neg");
     val negFiles = negDir.listFiles();
     val posDir = new java.io.File("resources/txt_sentoken/pos");
@@ -40,19 +36,6 @@ object Classifier {
 	    }
     }
     
-    /*
-    val lines = scala.io.Source.fromFile("resources/txt_sentoken/neg/cv000_29416.txt").getLines();
-    var dict = mutable.Map.empty[String, Int];
-    for (line <- lines) {
-      for (word <- stringToTokens(line)) {
-        dict = dict + (word -> 1);
-      }
-    }
-    */
-    //val words = new Map[(String];
-    //lines.foldLeft(words)((ls,line) => ls.append(ArrayBuffer.fromArray(stringToTokens(line))));
-    //for ((k,v) <- dict) println(k + " -> " + v)
     println(dict.size);
-    println("done");
   }
 }
