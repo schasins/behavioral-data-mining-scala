@@ -23,19 +23,40 @@ object Classifier {
     val posDir = new java.io.File("resources/txt_sentoken/pos");
     val posFiles = posDir.listFiles();
     
-    var dict = mutable.Map.empty[String,Int];
+    var dict = mutable.Map.empty[String,Int]; //maps words to their index in the eventual matrix
+    var matrixEntries = mutable.ListBuffer.empty[(Int,Int)]; //a record for each file-word pair, eventual matrix entries
+    var wordCounter = 0;
+    var fileCounter = 0;
     for (file <- negFiles++posFiles){
-        println("new file", file.getCanonicalPath());
+        //println("new file", file.getCanonicalPath());
         val lines = scala.io.Source.fromFile(file).getLines();
 	    for (line <- lines) {
 	      for (word <- stringToTokens(line)) {
 	        if (!dict.contains(word)) {
-	          dict = dict + (word -> 1);
+	          wordCounter += 1;
+	          dict = dict + (word -> wordCounter);
 	        }
+	        matrixEntries.append((dict(word),fileCounter));
 	      }
 	    }
+	    fileCounter += 1;
     }
     
     println(dict.size);
+    println(matrixEntries.size);
+    matrixEntries = matrixEntries.distinct;
+    println(matrixEntries.size);
+    
+    val wordIndices = matrixEntries.map(x => x._1).toList;
+    val fileIndices = matrixEntries.map(x => x._2).toList;
+    val len = wordIndices.length;
+    val values = List.fill(len){1};
+    
+    val wordIndicesCol = icol(wordIndices);
+    val fileIndicesCol = icol(fileIndices);
+    val valuesCol = icol(values);
+    
+    val matrix = sparse(wordIndicesCol,fileIndicesCol,valuesCol);
+    println(matrix);
   }
 }
