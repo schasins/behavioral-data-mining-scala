@@ -29,8 +29,8 @@ object Classifier {
       for (word <- stringToTokens(line)) {
         //if we haven't seen the word yet, add it to our dictionary
         if (!Dict.dict.contains(word)) {
-          Dict.wordCount += 1;
           Dict.dict += (word -> Dict.wordCount);
+          Dict.wordCount += 1;
         }
         var index = Dict.dict(word);
         //if we've seen this word in this file, increment in fileDict
@@ -90,5 +90,10 @@ object Classifier {
     val posPresenceMatrix = posMatrices._2;
     val negFrequencyMatrix = negMatrices._1;
     val negPresenceMatrix = negMatrices._2;
+    
+    val posWordCountVector = sum(posFrequencyMatrix,2);
+    val negWordCountVector = sum(negFrequencyMatrix,2);
+    println(posWordCountVector);
+    println(negWordCountVector);
   }
 }
