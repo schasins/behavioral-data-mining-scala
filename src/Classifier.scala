@@ -8,6 +8,11 @@ import scala.collection.mutable
 
 import java.io.File
 
+object Dict {
+  var dict = mutable.Map.empty[String,Int]; //maps words to their index in the eventual matrix
+  var wordCount = 0;
+}
+
 object Classifier {
   
   def stringToTokens(str : String) : Array[String] = {
@@ -17,35 +22,23 @@ object Classifier {
     return ls; 
   }
   
-  def main(args : Array[String]) : Unit = {
-    val negDir = new java.io.File("resources/txt_sentoken/neg");
-    val negFiles = negDir.listFiles();
-    val posDir = new java.io.File("resources/txt_sentoken/pos");
-    val posFiles = posDir.listFiles();
-    
-    var dict = mutable.Map.empty[String,Int]; //maps words to their index in the eventual matrix
+  def filesToMatrix(files : Array[File]) : BIDMat.SMat = {
     var matrixEntries = mutable.ListBuffer.empty[(Int,Int)]; //a record for each file-word pair, eventual matrix entries
-    var wordCounter = 0;
     var fileCounter = 0;
-    for (file <- negFiles++posFiles){
-        //println("new file", file.getCanonicalPath());
-        val lines = scala.io.Source.fromFile(file).getLines();
+    for (file <- files){
+        var lines = scala.io.Source.fromFile(file).getLines();
 	    for (line <- lines) {
 	      for (word <- stringToTokens(line)) {
-	        if (!dict.contains(word)) {
-	          wordCounter += 1;
-	          dict = dict + (word -> wordCounter);
+	        if (!Dict.dict.contains(word)) {
+	          Dict.wordCount += 1;
+	          Dict.dict += (word -> Dict.wordCount);
 	        }
-	        matrixEntries.append((dict(word),fileCounter));
+	        matrixEntries.append((Dict.dict(word),fileCounter));
 	      }
 	    }
 	    fileCounter += 1;
     }
-    
-    println(dict.size);
-    println(matrixEntries.size);
     matrixEntries = matrixEntries.distinct;
-    println(matrixEntries.size);
     
     val wordIndices = matrixEntries.map(x => x._1).toList;
     val fileIndices = matrixEntries.map(x => x._2).toList;
@@ -57,6 +50,20 @@ object Classifier {
     val valuesCol = icol(values);
     
     val matrix = sparse(wordIndicesCol,fileIndicesCol,valuesCol);
-    println(matrix);
+    return matrix;
+  }
+  
+  def main(args : Array[String]) : Unit = {
+    val negDir = new java.io.File("resources/txt_sentoken/neg");
+    val negFiles = negDir.listFiles();
+    val posDir = new java.io.File("resources/txt_sentoken/pos");
+    val posFiles = posDir.listFiles();
+    
+    val posMatrix = filesToMatrix(posFiles);
+    val negMatrix = filesToMatrix(negFiles);
+    
+    println(Dict.dict.size);
+    println(posMatrix);
+    println(negMatrix);
   }
 }
