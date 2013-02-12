@@ -22,35 +22,54 @@ object Classifier {
     return ls; 
   }
   
-  def filesToMatrix(files : Array[File]) : BIDMat.SMat = {
-    var matrixEntries = mutable.ListBuffer.empty[(Int,Int)]; //a record for each file-word pair, eventual matrix entries
+  def filesToMatrices(files : Array[File]) : (BIDMat.SMat, BIDMat.SMat) = {
+    var matrixEntries = mutable.ListBuffer.empty[(Int,Int,Int)]; //a record for each file-word pair, eventual matrix entries
     var fileCounter = 0;
+    
     for (file <- files){
+        var fileDict = mutable.Map.empty[Int,Int]; //maps words to frequency in curr file
         var lines = scala.io.Source.fromFile(file).getLines();
 	    for (line <- lines) {
 	      for (word <- stringToTokens(line)) {
+	        //if we haven't seen the word yet, add it to our dictionary
 	        if (!Dict.dict.contains(word)) {
 	          Dict.wordCount += 1;
 	          Dict.dict += (word -> Dict.wordCount);
 	        }
-	        matrixEntries.append((Dict.dict(word),fileCounter));
+	        var index = Dict.dict(word);
+	        //if we've seen this word in this file, increment in fileDict
+	        if (fileDict.contains(index)){
+	          fileDict(index)+=1;
+	        }
+	        //if we haven't seen this word in this file, add it to fileDict
+	        else{
+	          fileDict += (index -> 1);
+	        }
 	      }
+	    }
+	    //add the items from this file's fileDict to our matrix entries
+	    fileDict foreach {
+	      case (k, v) =>
+	        matrixEntries.append((k,fileCounter,v));
 	    }
 	    fileCounter += 1;
     }
-    matrixEntries = matrixEntries.distinct;
     
     val wordIndices = matrixEntries.map(x => x._1).toList;
     val fileIndices = matrixEntries.map(x => x._2).toList;
+    val frequencyValues = matrixEntries.map(x => x._3).toList;
     val len = wordIndices.length;
-    val values = List.fill(len){1};
+    val presenceValues = List.fill(len){1};
     
     val wordIndicesCol = icol(wordIndices);
     val fileIndicesCol = icol(fileIndices);
-    val valuesCol = icol(values);
+    val frequencyValuesCol = icol(frequencyValues);
+    val presenceValuesCol = icol(presenceValues);
     
-    val matrix = sparse(wordIndicesCol,fileIndicesCol,valuesCol);
-    return matrix;
+    val frequencyMatrix = sparse(wordIndicesCol,fileIndicesCol,frequencyValuesCol);
+    val presenceMatrix = sparse(wordIndicesCol,fileIndicesCol,presenceValuesCol);
+    
+    return (frequencyMatrix,presenceMatrix);
   }
   
   def main(args : Array[String]) : Unit = {
@@ -59,11 +78,7 @@ object Classifier {
     val posDir = new java.io.File("resources/txt_sentoken/pos");
     val posFiles = posDir.listFiles();
     
-    val posMatrix = filesToMatrix(posFiles);
-    val negMatrix = filesToMatrix(negFiles);
-    
-    println(Dict.dict.size);
-    println(posMatrix);
-    println(negMatrix);
+    val posMatrices = filesToMatrices(posFiles);
+    val negMatrices = filesToMatrices(negFiles);
   }
 }
