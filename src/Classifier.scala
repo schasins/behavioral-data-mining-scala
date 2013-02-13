@@ -12,9 +12,19 @@ import scala.util.Random
 import scala.math.log
 
 object Dict {
+  
+  def makeMap() : mutable.Map[String,Boolean] = {
+      val stopWords = Array("a", "about", "above", "above", "across", "after", "afterwards", "again", "against", "all", "almost", "alone", "along", "already", "also","although","always","am","among", "amongst", "amoungst", "amount", "an", "and", "another", "any","anyhow","anyone","anything","anyway", "anywhere", "are", "around", "as", "at", "back","be","became", "because","become","becomes", "becoming", "been", "before", "beforehand", "behind", "being", "below", "beside", "besides", "between", "beyond", "bill", "both", "bottom","but", "by", "call", "can", "cannot", "cant", "co", "con", "could", "couldnt", "cry", "de", "describe", "detail", "do", "done", "down", "due", "during", "each", "eg", "eight", "either", "eleven","else", "elsewhere", "empty", "enough", "etc", "even", "ever", "every", "everyone", "everything", "everywhere", "except", "few", "fifteen", "fify", "fill", "find", "fire", "first", "five", "for", "former", "formerly", "forty", "found", "four", "from", "front", "full", "further", "get", "give", "go", "had", "has", "hasnt", "have", "he", "hence", "her", "here", "hereafter", "hereby", "herein", "hereupon", "hers", "herself", "him", "himself", "his", "how", "however", "hundred", "ie", "if", "in", "inc", "indeed", "interest", "into", "is", "it", "its", "itself", "keep", "last", "latter", "latterly", "least", "less", "ltd", "made", "many", "may", "me", "meanwhile", "might", "mill", "mine", "more", "moreover", "most", "mostly", "move", "much", "must", "my", "myself", "name", "namely", "neither", "never", "nevertheless", "next", "nine", "no", "nobody", "none", "noone", "nor", "not", "nothing", "now", "nowhere", "of", "off", "often", "on", "once", "one", "only", "onto", "or", "other", "others", "otherwise", "our", "ours", "ourselves", "out", "over", "own","part", "per", "perhaps", "please", "put", "rather", "re", "same", "see", "seem", "seemed", "seeming", "seems", "serious", "several", "she", "should", "show", "side", "since", "sincere", "six", "sixty", "so", "some", "somehow", "someone", "something", "sometime", "sometimes", "somewhere", "still", "such", "system", "take", "ten", "than", "that", "the", "their", "them", "themselves", "then", "thence", "there", "thereafter", "thereby", "therefore", "therein", "thereupon", "these", "they", "thickv", "thin", "third", "this", "those", "though", "three", "through", "throughout", "thru", "thus", "to", "together", "too", "top", "toward", "towards", "twelve", "twenty", "two", "un", "under", "until", "up", "upon", "us", "very", "via", "was", "we", "well", "were", "what", "whatever", "when", "whence", "whenever", "where", "whereafter", "whereas", "whereby", "wherein", "whereupon", "wherever", "whether", "which", "while", "whither", "who", "whoever", "whole", "whom", "whose", "why", "will", "with", "within", "without", "would", "yet", "you", "your", "yours", "yourself", "yourselves", "the");
+	  val stopWordsMap = mutable.Map.empty[String,Boolean];
+	  for (word <- stopWords){
+	    stopWordsMap += (word -> true);
+	  }
+	  return stopWordsMap;
+  }
+  
   var dict = mutable.Map.empty[String,Int]; //maps words to their index in the eventual matrix
   var wordCount = 0;
-  val stopWords = Array("a", "about", "above", "above", "across", "after", "afterwards", "again", "against", "all", "almost", "alone", "along", "already", "also","although","always","am","among", "amongst", "amoungst", "amount", "an", "and", "another", "any","anyhow","anyone","anything","anyway", "anywhere", "are", "around", "as", "at", "back","be","became", "because","become","becomes", "becoming", "been", "before", "beforehand", "behind", "being", "below", "beside", "besides", "between", "beyond", "bill", "both", "bottom","but", "by", "call", "can", "cannot", "cant", "co", "con", "could", "couldnt", "cry", "de", "describe", "detail", "do", "done", "down", "due", "during", "each", "eg", "eight", "either", "eleven","else", "elsewhere", "empty", "enough", "etc", "even", "ever", "every", "everyone", "everything", "everywhere", "except", "few", "fifteen", "fify", "fill", "find", "fire", "first", "five", "for", "former", "formerly", "forty", "found", "four", "from", "front", "full", "further", "get", "give", "go", "had", "has", "hasnt", "have", "he", "hence", "her", "here", "hereafter", "hereby", "herein", "hereupon", "hers", "herself", "him", "himself", "his", "how", "however", "hundred", "ie", "if", "in", "inc", "indeed", "interest", "into", "is", "it", "its", "itself", "keep", "last", "latter", "latterly", "least", "less", "ltd", "made", "many", "may", "me", "meanwhile", "might", "mill", "mine", "more", "moreover", "most", "mostly", "move", "much", "must", "my", "myself", "name", "namely", "neither", "never", "nevertheless", "next", "nine", "no", "nobody", "none", "noone", "nor", "not", "nothing", "now", "nowhere", "of", "off", "often", "on", "once", "one", "only", "onto", "or", "other", "others", "otherwise", "our", "ours", "ourselves", "out", "over", "own","part", "per", "perhaps", "please", "put", "rather", "re", "same", "see", "seem", "seemed", "seeming", "seems", "serious", "several", "she", "should", "show", "side", "since", "sincere", "six", "sixty", "so", "some", "somehow", "someone", "something", "sometime", "sometimes", "somewhere", "still", "such", "system", "take", "ten", "than", "that", "the", "their", "them", "themselves", "then", "thence", "there", "thereafter", "thereby", "therefore", "therein", "thereupon", "these", "they", "thickv", "thin", "third", "this", "those", "though", "three", "through", "throughout", "thru", "thus", "to", "together", "too", "top", "toward", "towards", "twelve", "twenty", "two", "un", "under", "until", "up", "upon", "us", "very", "via", "was", "we", "well", "were", "what", "whatever", "when", "whence", "whenever", "where", "whereafter", "whereas", "whereby", "wherein", "whereupon", "wherever", "whether", "which", "while", "whither", "who", "whoever", "whole", "whom", "whose", "why", "will", "with", "within", "without", "would", "yet", "you", "your", "yours", "yourself", "yourselves", "the");
+  val stopWordsMap = makeMap();
 }
 
 object Classifier {
@@ -31,19 +41,22 @@ object Classifier {
     var lines = scala.io.Source.fromFile(file).getLines();
     for (line <- lines) {
       for (word <- stringToTokens(line)) {
-        //if we haven't seen the word yet, add it to our dictionary
-        if (!Dict.dict.contains(word)) {
-          Dict.dict += (word -> Dict.wordCount);
-          Dict.wordCount += 1;
-        }
-        var index = Dict.dict(word);
-        //if we've seen this word in this file, increment in fileDict
-        if (fileDict.contains(index)){
-          fileDict(index)+=1;
-        }
-        //if we haven't seen this word in this file, add it to fileDict
-        else{
-          fileDict += (index -> 1);
+        //if the word is in stop words, ignore it
+        if (!Dict.stopWordsMap.contains(word)){
+	        //if we haven't seen the word yet, add it to our dictionary
+	        if (!Dict.dict.contains(word)) {
+	          Dict.dict += (word -> Dict.wordCount);
+	          Dict.wordCount += 1;
+	        }
+	        var index = Dict.dict(word);
+	        //if we've seen this word in this file, increment in fileDict
+	        if (fileDict.contains(index)){
+	          fileDict(index)+=1;
+	        }
+	        //if we haven't seen this word in this file, add it to fileDict
+	        else{
+	          fileDict += (index -> 1);
+	        }
         }
       }
     }
@@ -175,20 +188,23 @@ object Classifier {
     val negFrequencyMatrix = negMatrices._1;
     val negPresenceMatrix = negMatrices._2;
     
-    for (i <- 0 to 10){
+    var scoreTotal = 0.toFloat;
+    for (i <- 0 to 9){
       val posColIndices = selectRandom(1000,900);
       val posTrainingCols = posFrequencyMatrix(?, posColIndices._1);
-      val posTestCols = posPresenceMatrix(?, posColIndices._2);
+      val posTestCols = posFrequencyMatrix(?, posColIndices._2);
       val posClassifier = trainClassifier(posTrainingCols);
       
       val negColIndices = selectRandom(1000,900);
       val negTrainingCols = negFrequencyMatrix(?, negColIndices._1);
-      val negTestCols = negPresenceMatrix(?, negColIndices._2);
+      val negTestCols = negFrequencyMatrix(?, negColIndices._2);
       val negClassifier = trainClassifier(negTrainingCols);
       
       val score = testClassifier(posClassifier,negClassifier,posTestCols,negTestCols);
       println(score);
+      scoreTotal += score;
     }
+    println(scoreTotal/10);
     
   }
 }
