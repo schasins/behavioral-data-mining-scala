@@ -8,6 +8,8 @@ import scala.collection.mutable
 
 import java.io.File
 
+import scala.util.Random
+
 object Dict {
   var dict = mutable.Map.empty[String,Int]; //maps words to their index in the eventual matrix
   var wordCount = 0;
@@ -94,6 +96,14 @@ object Classifier {
     return probVector;
   }
   
+  def selectRandom(fullLength: Int, targetLength : Int) : BIDMat.IMat = {
+    var r = (new Range(0,fullLength,1)).toList;
+    r = Random.shuffle(r);
+    val trainingColIndices = r.slice(0,targetLength);
+    val trainingColIndicesVector = icol(trainingColIndices);
+    return trainingColIndicesVector;
+  }
+  
   def main(args : Array[String]) : Unit = {
     val negDir = new java.io.File("resources/txt_sentoken/neg");
     val negFiles = negDir.listFiles();
@@ -107,6 +117,14 @@ object Classifier {
     val posPresenceMatrix = posMatrices._2;
     val negFrequencyMatrix = negMatrices._1;
     val negPresenceMatrix = negMatrices._2;
+    
+    for (i <- 0 to 10){
+      val posTrainingColIndices = selectRandom(1000,900);
+      val posTrainingCols = posFrequencyMatrix(?, posTrainingColIndices);
+      val negTrainingColIndices = selectRandom(1000,900);
+      val negTrainingCols = negFrequencyMatrix(?, negTrainingColIndices);
+    }
+    
     
     val posClassifier = trainClassifier(posFrequencyMatrix);
     val negClassifier = trainClassifier(negFrequencyMatrix)
