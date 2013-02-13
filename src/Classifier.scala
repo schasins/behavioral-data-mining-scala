@@ -22,6 +22,7 @@ object Dict {
 	  return stopWordsMap;
   }
   
+  var filterStopWords = true;
   var dict = mutable.Map.empty[String,Int]; //maps words to their index in the eventual matrix
   var wordCount = 0;
   val stopWordsMap = makeMap();
@@ -36,13 +37,27 @@ object Classifier {
     return ls; 
   }
   
+  def stringToBigrams(str : String) : Array [String] = {
+    var bigrams = Array.empty[String];
+    val lowerStr = str.toLowerCase();
+    val sentences = lowerStr.split(".;,");
+    for (sentence <- sentences){
+      val lowerSentence = sentence.replaceAll("[^\\sa-z0-9']", "");
+      val ls = lowerSentence.split("\\s+");
+      for (i <- 0 to ls.length-2){
+    	  bigrams :+ ls(i)+" "+ls(i+1);
+      }
+    }
+    return bigrams;
+  }
+  
   def fileToFrequencyDict(file : File) : mutable.Map[Int,Int] = {
     var fileDict = mutable.Map.empty[Int,Int]; //maps words to frequency in curr file
     var lines = scala.io.Source.fromFile(file).getLines();
     for (line <- lines) {
       for (word <- stringToTokens(line)) {
-        //if the word is in stop words, ignore it
-        if (!Dict.stopWordsMap.contains(word)){
+        //if the word is in stop words, ignore it, if we're filtering out stop words
+        if (!Dict.filterStopWords || !Dict.stopWordsMap.contains(word)){
 	        //if we haven't seen the word yet, add it to our dictionary
 	        if (!Dict.dict.contains(word)) {
 	          Dict.dict += (word -> Dict.wordCount);
@@ -164,14 +179,16 @@ object Classifier {
     return (2*p*r)/(p+r);
   }
   
-  def testClassifier(posClassifier : BIDMat.SMat, negClassifier : BIDMat.SMat, posTestCols : BIDMat.SMat, negTestCols : BIDMat.SMat) : Float = {
+  def testClassifier(posClassifier : BIDMat.SMat, negClassifier : BIDMat.SMat, posTestCols : BIDMat.SMat, negTestCols : BIDMat.SMat) : (Float,Float) = {
 	val posResults = numPosNumNeg(posClassifier,negClassifier,posTestCols);
 	val negResults = numPosNumNeg(posClassifier,negClassifier,negTestCols);
 	val truePositives = posResults._1; //positive reviews classifed as positive
+	val trueNegatives = negResults._2; //negative reviews classified as negative
 	val falsePositives = negResults._1; //negative reviews classified as positive
-	val falseNegatives = posResults._2; //positive reviews classiifed as negative
-	println(truePositives,falsePositives,falseNegatives);
-    return f1(truePositives,falsePositives,falseNegatives);
+	val falseNegatives = posResults._2; //positive reviews classified as negative
+	val posF1 = f1(truePositives,falsePositives,falseNegatives);
+	val negF1 = f1(trueNegatives,falseNegatives,falsePositives);
+	return (posF1,negF1);
   }
   
   def main(args : Array[String]) : Unit = {
@@ -188,23 +205,42 @@ object Classifier {
     val negFrequencyMatrix = negMatrices._1;
     val negPresenceMatrix = negMatrices._2;
     
-    var scoreTotal = 0.toFloat;
-    for (i <- 0 to 9){
+    val numRuns = 10;
+    
+    var posScoreTotal = 0.toFloat;
+    var negScoreTotal = 0.toFloat;
+    for (i <- 0 to numRuns-1){
       val posColIndices = selectRandom(1000,900);
       val posTrainingCols = posFrequencyMatrix(?, posColIndices._1);
-      val posTestCols = posFrequencyMatrix(?, posColIndices._2);
+      val posTestCols = posPresenceMatrix(?, posColIndices._2);
       val posClassifier = trainClassifier(posTrainingCols);
       
       val negColIndices = selectRandom(1000,900);
       val negTrainingCols = negFrequencyMatrix(?, negColIndices._1);
-      val negTestCols = negFrequencyMatrix(?, negColIndices._2);
+      val negTestCols = negPresenceMatrix(?, negColIndices._2);
       val negClassifier = trainClassifier(negTrainingCols);
       
       val score = testClassifier(posClassifier,negClassifier,posTestCols,negTestCols);
       println(score);
-      scoreTotal += score;
+      posScoreTotal += score._1;
+      negScoreTotal += score._2;
+      
+      println("*******POS");
+      val (posClassifierSorted,pPos) = sort2(full(posClassifier),1);
+      val (negClassifierSorted,pNeg) = sort2(full(negClassifier),1);
+      for (i <- 0 to pPos.nrows-1){
+        if (pPos(i)<15){
+          Dict.dict foreach {case (key, value) => if (value==i) {println(key,pPos(i),posClassifier(i,0))}}
+        }
+      }
+      println("*****NEG");
+      for (i <- 0 to pNeg.nrows-1){
+        if (pNeg(i)<15){
+          Dict.dict foreach {case (key, value) => if (value==i) {println(key,pNeg(i),negClassifier(i,0))}}
+        }
+      }
     }
-    println(scoreTotal/10);
-    
+    println(posScoreTotal/numRuns);
+    println(negScoreTotal/numRuns);
   }
 }
