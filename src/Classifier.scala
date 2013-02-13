@@ -118,11 +118,6 @@ object Classifier {
     var numCols = testCols.ncols;
     val posClassifierSized = posClassifier(0 to (numRows-1), ?);
     val negClassifierSized = negClassifier(0 to (numRows-1), ?);
-    println(testCols.nrows, testCols.ncols);
-    println(posClassifier.nrows, posClassifier.ncols);
-    println(posClassifierSized.nrows, posClassifierSized.ncols);
-    println(negClassifier.nrows, negClassifier.ncols);
-    println(negClassifierSized.nrows, negClassifierSized.ncols);
     
     var numPos = 0;
     var numNeg = 0;
@@ -143,11 +138,11 @@ object Classifier {
   }
   
   def precision (truePositives : Int, falsePositives : Int) : Float = {
-    return truePositives/(truePositives+falsePositives);
+    return truePositives.toFloat/(truePositives+falsePositives);
   }
   
   def recall (truePositives : Int, falseNegatives : Int) : Float = {
-    return truePositives/(truePositives+falseNegatives);
+    return truePositives.toFloat/(truePositives+falseNegatives);
   }
   
   def f1(truePositives : Int, falsePositives :Int, falseNegatives :Int) : Float = {
@@ -162,6 +157,7 @@ object Classifier {
 	val truePositives = posResults._1; //positive reviews classifed as positive
 	val falsePositives = negResults._1; //negative reviews classified as positive
 	val falseNegatives = posResults._2; //positive reviews classiifed as negative
+	println(truePositives,falsePositives,falseNegatives);
     return f1(truePositives,falsePositives,falseNegatives);
   }
   
@@ -182,12 +178,12 @@ object Classifier {
     for (i <- 0 to 10){
       val posColIndices = selectRandom(1000,900);
       val posTrainingCols = posFrequencyMatrix(?, posColIndices._1);
-      val posTestCols = posFrequencyMatrix(?, posColIndices._2);
+      val posTestCols = posPresenceMatrix(?, posColIndices._2);
       val posClassifier = trainClassifier(posTrainingCols);
       
       val negColIndices = selectRandom(1000,900);
       val negTrainingCols = negFrequencyMatrix(?, negColIndices._1);
-      val negTestCols = negFrequencyMatrix(?, negColIndices._2);
+      val negTestCols = negPresenceMatrix(?, negColIndices._2);
       val negClassifier = trainClassifier(negTrainingCols);
       
       val score = testClassifier(posClassifier,negClassifier,posTestCols,negTestCols);
