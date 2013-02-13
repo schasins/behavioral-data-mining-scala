@@ -77,6 +77,7 @@ object Classifier {
     return (frequencyMatrix,presenceMatrix);
   }
   
+  
   def main(args : Array[String]) : Unit = {
     val negDir = new java.io.File("resources/txt_sentoken/neg");
     val negFiles = negDir.listFiles();
@@ -91,9 +92,20 @@ object Classifier {
     val negFrequencyMatrix = negMatrices._1;
     val negPresenceMatrix = negMatrices._2;
     
-    val posWordCountVector = sum(posFrequencyMatrix,2);
+    val posWordCountVector = sum(posFrequencyMatrix,2); //creates column vector of sum of each row
     val negWordCountVector = sum(negFrequencyMatrix,2);
-    println(posWordCountVector);
-    println(negWordCountVector);
+    val posWordCountTotal = sum(posWordCountVector)(0); //sum of all elements in the vector
+    val negWordCountTotal = sum(negWordCountVector)(0);
+    val vocabularySize = Dict.dict.size;
+    
+    var posVectorEntries = mutable.ListBuffer.empty[(Int,Float)]; //an entry for each word in vocab
+    for(wordIndex <- 0 to (posWordCountVector.size-1)){
+        val prob = (posWordCountVector(wordIndex)+1)/(posWordCountTotal+vocabularySize);
+    	posVectorEntries.append((wordIndex,prob));
+    }
+    val wordIndicesCol = icol(posVectorEntries.map(x => x._1).toList);
+    val colIndexCol = icol(List.fill(posVectorEntries.size){0});
+    val probsCol = col(posVectorEntries.map(x => x._2).toList);
+    val posProbVector = sparse(wordIndicesCol,colIndexCol,probsCol);
   }
 }
