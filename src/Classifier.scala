@@ -22,7 +22,8 @@ object Dict {
 	  return stopWordsMap;
   }
   
-  var filterStopWords = true;
+  val filterStopWords = true;
+  val includeBigrams = false;
   var dict = mutable.Map.empty[String,Int]; //maps words to their index in the eventual matrix
   var wordCount = 0;
   val stopWordsMap = makeMap();
@@ -40,12 +41,12 @@ object Classifier {
   def stringToBigrams(str : String) : Array [String] = {
     var bigrams = Array.empty[String];
     val lowerStr = str.toLowerCase();
-    val sentences = lowerStr.split(".;,");
+    val sentences = lowerStr.split(".");
     for (sentence <- sentences){
       val lowerSentence = sentence.replaceAll("[^\\sa-z0-9']", "");
       val ls = lowerSentence.split("\\s+");
       for (i <- 0 to ls.length-2){
-    	  bigrams :+ ls(i)+" "+ls(i+1);
+    	  bigrams = bigrams :+ ls(i)+" "+ls(i+1);
       }
     }
     return bigrams;
@@ -55,7 +56,12 @@ object Classifier {
     var fileDict = mutable.Map.empty[Int,Int]; //maps words to frequency in curr file
     var lines = scala.io.Source.fromFile(file).getLines();
     for (line <- lines) {
-      for (word <- stringToTokens(line)) {
+      //words may be either a list of words or a list of both words and bigrams
+      var words = stringToTokens(line);
+      if (Dict.includeBigrams){
+        words = words ++ stringToBigrams(line);
+      }
+      for (word <- words) {
         //if the word is in stop words, ignore it, if we're filtering out stop words
         if (!Dict.filterStopWords || !Dict.stopWordsMap.contains(word)){
 	        //if we haven't seen the word yet, add it to our dictionary
@@ -192,6 +198,8 @@ object Classifier {
   }
   
   def main(args : Array[String]) : Unit = {
+    flip;
+    
     val negDir = new java.io.File("resources/txt_sentoken/neg");
     val negFiles = negDir.listFiles();
     val posDir = new java.io.File("resources/txt_sentoken/pos");
@@ -224,23 +232,11 @@ object Classifier {
       println(score);
       posScoreTotal += score._1;
       negScoreTotal += score._2;
-      
-      println("*******POS");
-      val (posClassifierSorted,pPos) = sort2(full(posClassifier),1);
-      val (negClassifierSorted,pNeg) = sort2(full(negClassifier),1);
-      for (i <- 0 to pPos.nrows-1){
-        if (pPos(i)<15){
-          Dict.dict foreach {case (key, value) => if (value==i) {println(key,pPos(i),posClassifier(i,0))}}
-        }
-      }
-      println("*****NEG");
-      for (i <- 0 to pNeg.nrows-1){
-        if (pNeg(i)<15){
-          Dict.dict foreach {case (key, value) => if (value==i) {println(key,pNeg(i),negClassifier(i,0))}}
-        }
-      }
     }
     println(posScoreTotal/numRuns);
     println(negScoreTotal/numRuns);
   }
+  
+  val time = gflop;
+  println(time);
 }
