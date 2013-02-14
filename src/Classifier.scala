@@ -235,8 +235,10 @@ object Classifier {
     }
     println(posScoreTotal/numRuns);
     println(negScoreTotal/numRuns);
+    
+    println("Time:");
+	val time = gflop;
+	println(time);
   }
   
-  val time = gflop;
-  println(time);
 }
